@@ -1,7 +1,9 @@
 use std::env;
+use std::ffi::OsString;
 use std::io;
-use std::path::Path;
-use std::usize;
+use std::os::unix::process::CommandExt;
+use std::path::{Path, PathBuf};
+use std::process::Command;
 
 
 fn get_input() -> Result<usize, String>{
@@ -9,6 +11,10 @@ fn get_input() -> Result<usize, String>{
     io::stdin()
         .read_line(&mut input)
         .expect("Input Error");
+
+    if input.trim() == "q"{
+        return Err("quit".to_string());
+    }
     let input: usize = if let Ok(usize) = input.trim().parse(){
         usize
     }
@@ -18,13 +24,24 @@ fn get_input() -> Result<usize, String>{
     Ok(input)
 }
 
-pub fn run() -> Result<(), String>{
+fn open_file(file: &Path) -> io::Error{
+    let mut input = String::new();
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Input Error");
 
+    return Command::new(input.trim())
+        .arg(file)
+        .exec();
+}
+
+pub fn run() -> Result<(), String>{
     loop{
-        let dir = env::current_dir().unwrap().clone();
+        let dir = env::current_dir().unwrap();
         let mut dir = dir.as_path();
 
-        let mut paths = dir.read_dir().unwrap();
+        let paths = dir.read_dir().unwrap();
+        let paths_num = dir.read_dir().unwrap().count();
 
         println!("0: ..");
         let mut i: u32 = 0;
@@ -34,20 +51,35 @@ pub fn run() -> Result<(), String>{
         }
 
         let input = match get_input() {
-            Ok(usize) => usize,
-            Err(string) => return Err(string),
+            Ok(size) => if size <= paths_num {
+                    size
+                }
+                else{
+                    println!("Bitte gib eine gültige Option ein");
+                    continue;
+                },
+            Err(string) => {
+                if string == "quit" {
+                    return Ok(());
+                }
+                println!("{string}"); 
+                continue;
+            },
         };
 
         let mut paths = dir.read_dir().unwrap();
-        let as_os_string = paths.nth(input-1).unwrap().unwrap().file_name();
+        let as_path: PathBuf;
         dir = if input == 0{
             dir.parent().unwrap()
         }
         else {
-            Path::new(&as_os_string)
+            as_path = paths.nth(input-1).unwrap().unwrap().path();
+            Path::new(&as_path)
         };
+        if dir.is_file(){
+                println!("{}", open_file(&dir));
+                continue;
+        }
         env::set_current_dir(dir);
     }
-
-    Ok(())
 }
