@@ -5,7 +5,6 @@ use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::usize;
-use std::fs;
 
 enum Input{
     Choose(usize),
@@ -57,6 +56,7 @@ pub fn run() -> Result<(), String>{
 
         let paths = dir.read_dir().unwrap();
         let paths_num = dir.read_dir().unwrap().count();
+        println!("\n{}:", dir.to_str().unwrap());
 
         println!("0: ..");
         let mut i: u32 = 0;
@@ -68,7 +68,7 @@ pub fn run() -> Result<(), String>{
         let input = match get_input() {
             Ok(input) => match input{
                     Input::Choose(size) => {
-                        if (size > paths_num){
+                        if size > paths_num {
                             eprintln!("Keine Gültige Option");
                             continue;
                         }
