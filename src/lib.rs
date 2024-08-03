@@ -4,30 +4,41 @@ use std::io::Write;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::usize;
+use std::fs;
 
+enum Input{
+    Choose(usize),
+    Quit,
+    NewDir,
+}
 
-fn get_input() -> Result<usize, String>{
+fn get_input() -> Result<Input, String>{
     print!("Wähle eine Option: ");
     io::stdout().flush().unwrap();
+
     let mut input = String::new();
     io::stdin()
         .read_line(&mut input)
         .expect("Input Error");
 
-    if input.trim() == "q"{
-        return Err("quit".to_string());
-    }
-    let input: usize = if let Ok(usize) = input.trim().parse(){
-        usize
-    }
-    else{
-        return Err("Eingabe ist keine Zahl".to_string());
+    return match input.trim(){
+        "q" => Ok(Input::Quit),
+        "mkdir" => Ok(Input::NewDir),
+        _ => {
+            let input: usize = if let Ok(usize) = input.trim().parse(){
+                usize
+            }
+            else{
+                return Err("Eingabe ist kein Befehl oder eine Zahl".to_string());
+            };
+            Ok(Input::Choose(input))
+        },
     };
-    Ok(input)
 }
 
 fn open_file(file: &Path) -> io::Error{
-    print!("Prgramm zum öffnen der Datei: ");
+    print!("Programm zum Öffnen der Datei: ");
     io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin()
@@ -55,17 +66,21 @@ pub fn run() -> Result<(), String>{
         }
 
         let input = match get_input() {
-            Ok(size) => if size <= paths_num {
-                    size
-                }
-                else{
-                    println!("Bitte gib eine gültige Option ein");
-                    continue;
+            Ok(input) => match input{
+                    Input::Choose(size) => {
+                        if (size > paths_num){
+                            eprintln!("Keine Gültige Option");
+                            continue;
+                        }
+                        size
+                    },
+                    Input::Quit => return Ok(()),
+                    _ => {
+                        println!("Bitte gib eine gültige Option ein");
+                        continue;
+                    }
                 },
             Err(string) => {
-                if string == "quit" {
-                    return Ok(());
-                }
                 println!("{string}"); 
                 continue;
             },
