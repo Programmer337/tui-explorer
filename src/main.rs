@@ -6,3 +6,8 @@ fn main() {
         process::exit(1);
     }
 }
+
+/*UI verbessern 
+* Ordner erstellen funktion
+* Configfunnktion (siehe Turoria)
+*/

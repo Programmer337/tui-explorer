@@ -1,5 +1,4 @@
 use std::env;
-use std::ffi::OsString;
 use std::io;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
@@ -70,7 +69,13 @@ pub fn run() -> Result<(), String>{
         let mut paths = dir.read_dir().unwrap();
         let as_path: PathBuf;
         dir = if input == 0{
-            dir.parent().unwrap()
+            if let Some(path) = dir.parent(){
+                path
+            }
+            else {
+                eprintln!("Kein Überverzeichniss");
+                continue;
+            }
         }
         else {
             as_path = paths.nth(input-1).unwrap().unwrap().path();
@@ -81,5 +86,5 @@ pub fn run() -> Result<(), String>{
                 continue;
         }
         env::set_current_dir(dir);
-    }
+    } 
 }
