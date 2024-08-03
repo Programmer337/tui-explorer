@@ -1,11 +1,14 @@
 use std::env;
 use std::io;
+use std::io::Write;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
 
 fn get_input() -> Result<usize, String>{
+    print!("Wähle eine Option: ");
+    io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin()
         .read_line(&mut input)
@@ -24,6 +27,8 @@ fn get_input() -> Result<usize, String>{
 }
 
 fn open_file(file: &Path) -> io::Error{
+    print!("Prgramm zum öffnen der Datei: ");
+    io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin()
         .read_line(&mut input)
@@ -85,6 +90,6 @@ pub fn run() -> Result<(), String>{
                 println!("{}", open_file(&dir));
                 continue;
         }
-        env::set_current_dir(dir);
+        env::set_current_dir(dir).unwrap();
     } 
 }

@@ -7,7 +7,6 @@ fn main() {
     }
 }
 
-/*UI verbessern 
-* Ordner erstellen funktion
-* Configfunnktion (siehe Turoria)
+/*Ordner erstellen funktion
+* Configfunnktion (siehe Turorial)
 */
