@@ -8,5 +8,6 @@ fn main() {
 }
 
 /*Ordner erstellen funktion
+* Ordnernamen eingeben = in diesen navigieren
 * Configfunnktion (siehe Turorial)
 */

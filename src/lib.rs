@@ -1,5 +1,6 @@
 use std::env;
 use std::io;
+use std::fs;
 use std::io::Write;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
@@ -8,6 +9,7 @@ use std::usize;
 
 enum Input{
     Choose(usize),
+    DirName(String),
     Quit,
     NewDir,
 }
@@ -21,19 +23,18 @@ fn get_input() -> Result<Input, String>{
         .read_line(&mut input)
         .expect("Input Error");
 
-    return match input.trim(){
+    match input.trim(){
         "q" => Ok(Input::Quit),
         "mkdir" => Ok(Input::NewDir),
         _ => {
-            let input: usize = if let Ok(usize) = input.trim().parse(){
-                usize
+            if let Ok(usize) = input.trim().parse(){
+                Ok(Input::Choose(usize))
             }
             else{
-                return Err("Eingabe ist kein Befehl oder eine Zahl".to_string());
-            };
-            Ok(Input::Choose(input))
+                Ok(Input::DirName(input))
+            }
         },
-    };
+    }
 }
 
 fn open_file(file: &Path) -> io::Error{
@@ -49,21 +50,25 @@ fn open_file(file: &Path) -> io::Error{
         .exec();
 }
 
+fn print_dirs (paths: fs::ReadDir) -> usize {
+    println!("0: ..");
+        let mut i: usize = 0;
+        for path in paths{
+            i += 1;
+            println!("{}. {}", i, path.unwrap().path().file_name().unwrap().to_str().unwrap());
+        }
+        i
+}
+
 pub fn run() -> Result<(), String>{
     loop{
         let dir = env::current_dir().unwrap();
         let mut dir = dir.as_path();
 
         let paths = dir.read_dir().unwrap();
-        let paths_num = dir.read_dir().unwrap().count();
-        println!("\n{}:", dir.to_str().unwrap());
 
-        println!("0: ..");
-        let mut i: u32 = 0;
-        for path in paths{
-            i += 1;
-            println!("{}. {}", i, path.unwrap().path().file_name().unwrap().to_str().unwrap());
-        }
+        println!("\n{}:", dir.to_str().unwrap());
+        let paths_num = print_dirs(paths);
 
         let input = match get_input() {
             Ok(input) => match input{
@@ -102,9 +107,9 @@ pub fn run() -> Result<(), String>{
             Path::new(&as_path)
         };
         if dir.is_file(){
-                println!("{}", open_file(&dir));
-                continue;
+            println!("{}", open_file(&dir));
+            continue;
         }
-        env::set_current_dir(dir).unwrap();
+        env::set_current_dir(dir).expect("Dieser Ordner konnte nicht geöffnet werden");
     } 
 }
