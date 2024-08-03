@@ -1,7 +1,6 @@
 use std::env;
-use std::io;
+use std::io::{self, Write};
 use std::fs;
-use std::io::Write;
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -11,7 +10,7 @@ enum Input{
     Choose(usize),
     DirName(String),
     Quit,
-    NewDir,
+    NewDir(String),
 }
 
 fn get_input() -> Result<Input, String>{
@@ -25,7 +24,15 @@ fn get_input() -> Result<Input, String>{
 
     match input.trim(){
         "q" => Ok(Input::Quit),
-        "mkdir" => Ok(Input::NewDir),
+        "mkdir" => {
+            input = String::from("");
+            print!("Name: ");
+            io::stdout().flush().unwrap();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Input error");
+            Ok(Input::NewDir(input.trim().to_string()))
+        },
         _ => {
             if let Ok(usize) = input.trim().parse(){
                 Ok(Input::Choose(usize))
@@ -79,6 +86,10 @@ pub fn run() -> Result<(), String>{
                         }
                         size
                     },
+                    Input::NewDir(name) => {
+                        fs::create_dir(name).expect("Unbekannter Fehler beim erstellen des Ordners");
+                        continue;
+                    }
                     Input::Quit => return Ok(()),
                     _ => {
                         println!("Bitte gib eine gültige Option ein");
