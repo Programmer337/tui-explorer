@@ -42,7 +42,7 @@ fn get_input() -> Result<Input, String>{
                 .read_line(&mut input)
                 .expect("Input error");
 
-            Ok(Input::Rm(input))
+            Ok(Input::Rm(input.trim().to_string()))
         }
         _ => {
             if let Ok(usize) = input.trim().parse(){
@@ -98,16 +98,22 @@ pub fn run() -> Result<(), String>{
                         size
                     },
                     Input::NewDir(name) => {
-                        fs::create_dir(name).expect("Unbekannter Fehler beim erstellen des Ordners");
+                        fs::create_dir(name).unwrap_or_else(|err|{
+                            println!("{}", err.kind());
+                        });
                         continue;
                     }
                     Input::Rm(name) => {
                         let as_path = Path::new(&name);
                         if as_path.is_dir(){
-                            fs::remove_dir_all(name).expect("Ordner kann nicht gelöscht werden");
+                            fs::remove_dir_all(name).unwrap_or_else(|err|{
+                                println!("{}", err.kind());
+                            });
                         }
                         else {
-                            fs::remove_file(as_path).expect("Datei kann nicht gelöscht werden");
+                            fs::remove_file(as_path).unwrap_or_else(|err|{
+                                println!("{}", err.kind());
+                            });
                         }
                         continue;
                     }

@@ -7,7 +7,7 @@ fn main() {
     }
 }
 
-/*Ordner/Dateien löschen
+/*Comondos einegeben
 * Ordnernamen eingeben = in diesen navigieren
 * Configfunnktion (siehe Turorial)
 */
