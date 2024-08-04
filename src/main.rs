@@ -7,7 +7,7 @@ fn main() {
     }
 }
 
-/*Ordner erstellen funktion
+/*Ordner/Dateien löschen
 * Ordnernamen eingeben = in diesen navigieren
 * Configfunnktion (siehe Turorial)
 */

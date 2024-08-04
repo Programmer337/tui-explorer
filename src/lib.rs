@@ -9,8 +9,9 @@ use std::usize;
 enum Input{
     Choose(usize),
     DirName(String),
-    Quit,
     NewDir(String),
+    Rm(String),
+    Quit,
 }
 
 fn get_input() -> Result<Input, String>{
@@ -33,6 +34,16 @@ fn get_input() -> Result<Input, String>{
                 .expect("Input error");
             Ok(Input::NewDir(input.trim().to_string()))
         },
+        "rm" => {
+            input = String::from("");
+            print!("Name: ");
+            io::stdout().flush().unwrap();
+            io::stdin()
+                .read_line(&mut input)
+                .expect("Input error");
+
+            Ok(Input::Rm(input))
+        }
         _ => {
             if let Ok(usize) = input.trim().parse(){
                 Ok(Input::Choose(usize))
@@ -88,6 +99,16 @@ pub fn run() -> Result<(), String>{
                     },
                     Input::NewDir(name) => {
                         fs::create_dir(name).expect("Unbekannter Fehler beim erstellen des Ordners");
+                        continue;
+                    }
+                    Input::Rm(name) => {
+                        let as_path = Path::new(&name);
+                        if as_path.is_dir(){
+                            fs::remove_dir_all(name).expect("Ordner kann nicht gelöscht werden");
+                        }
+                        else {
+                            fs::remove_file(as_path).expect("Datei kann nicht gelöscht werden");
+                        }
                         continue;
                     }
                     Input::Quit => return Ok(()),
