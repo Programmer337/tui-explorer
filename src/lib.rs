@@ -10,6 +10,28 @@ use input::*;
 
 mod input;
 
+pub struct Config{
+    list_all: bool,
+}
+impl Config {
+    pub fn read_conf() -> Self{
+        let as_string: u8 = env::var("list-all").unwrap_or_else(|_err|{
+            "0".to_string()
+        }).trim().parse().unwrap_or_else(|_err|{
+            0
+        });
+        let mut list_all: bool = match as_string {
+            0 => false,
+            _ => true,
+        };
+
+        if env::args().nth(1).unwrap_or("0".to_string()) == "--list-all".to_string(){
+            list_all = true;
+        };
+
+        Self{list_all}
+    }
+}
 
 fn open_file(file: &Path) -> io::Error{
     print!("Programm zum Öffnen der Datei: ");
@@ -33,8 +55,7 @@ fn print_dirs (paths: fs::ReadDir) -> usize {
     }
     i
 }
-
-pub fn run() -> Result<(), String>{
+pub fn run(config: Config) -> Result<(), String>{
     loop{
         let dir = env::current_dir().unwrap();
         let mut dir = dir.as_path();
