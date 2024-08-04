@@ -6,54 +6,10 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::usize;
 
-enum Input{
-    Choose(usize),
-    DirName(String),
-    NewDir(String),
-    Rm(String),
-    Quit,
-}
+use input::*;
 
-fn get_input() -> Result<Input, String>{
-    print!("Wähle eine Option: ");
-    io::stdout().flush().unwrap();
+mod input;
 
-    let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Input Error");
-
-    match input.trim(){
-        "q" => Ok(Input::Quit),
-        "mkdir" => {
-            input = String::from("");
-            print!("Name: ");
-            io::stdout().flush().unwrap();
-            io::stdin()
-                .read_line(&mut input)
-                .expect("Input error");
-            Ok(Input::NewDir(input.trim().to_string()))
-        },
-        "rm" => {
-            input = String::from("");
-            print!("Name: ");
-            io::stdout().flush().unwrap();
-            io::stdin()
-                .read_line(&mut input)
-                .expect("Input error");
-
-            Ok(Input::Rm(input.trim().to_string()))
-        }
-        _ => {
-            if let Ok(usize) = input.trim().parse(){
-                Ok(Input::Choose(usize))
-            }
-            else{
-                Ok(Input::DirName(input))
-            }
-        },
-    }
-}
 
 fn open_file(file: &Path) -> io::Error{
     print!("Programm zum Öffnen der Datei: ");
@@ -63,19 +19,19 @@ fn open_file(file: &Path) -> io::Error{
         .read_line(&mut input)
         .expect("Input Error");
 
-    return Command::new(input.trim())
+    Command::new(input.trim())
         .arg(file)
-        .exec();
+        .exec()
 }
 
 fn print_dirs (paths: fs::ReadDir) -> usize {
     println!("0: ..");
-        let mut i: usize = 0;
-        for path in paths{
-            i += 1;
-            println!("{}. {}", i, path.unwrap().path().file_name().unwrap().to_str().unwrap());
-        }
-        i
+    let mut i: usize = 0;
+    for path in paths{
+        i += 1;
+        println!("{}. {}", i, path.unwrap().path().file_name().unwrap().to_str().unwrap());
+    }
+    i
 }
 
 pub fn run() -> Result<(), String>{
@@ -88,7 +44,7 @@ pub fn run() -> Result<(), String>{
         println!("\n{}:", dir.to_str().unwrap());
         let paths_num = print_dirs(paths);
 
-        let input = match get_input() {
+        let input = match Input::get_input() {
             Ok(input) => match input{
                     Input::Choose(size) => {
                         if size > paths_num {
