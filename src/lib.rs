@@ -46,12 +46,17 @@ fn open_file(file: &Path) -> io::Error{
         .exec()
 }
 
-fn print_dirs (paths: fs::ReadDir) -> usize {
+fn print_dirs (paths: fs::ReadDir, list_all: bool) -> usize {
     println!("0: ..");
     let mut i: usize = 0;
     for path in paths{
-        i += 1;
-        println!("{}. {}", i, path.unwrap().path().file_name().unwrap().to_str().unwrap());
+        let dir_entry = &path.unwrap();
+        let path = &dir_entry.path();
+        let element = path.file_name().unwrap();
+        if list_all || !element.to_str().unwrap().starts_with("."){
+            i += 1;
+            println!("{}. {}", i, element.to_str().unwrap());
+        }
     }
     i
 }
@@ -63,7 +68,7 @@ pub fn run(config: Config) -> Result<(), String>{
         let paths = dir.read_dir().unwrap();
 
         println!("\n{}:", dir.to_str().unwrap());
-        let paths_num = print_dirs(paths);
+        let paths_num = print_dirs(paths, config.list_all);
 
         let input = match Input::get_input() {
             Ok(input) => match input{
