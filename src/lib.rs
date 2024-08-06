@@ -91,7 +91,12 @@ pub fn run(config: Config) -> Result<(), String>{
                             continue;
                         }
                         size
-                    },
+                    }
+                    Input::DirName(name) => {
+                        let dir = dir.to_str().unwrap().to_string() + "/" + &name.trim();
+                        env::set_current_dir(dir).expect("Dieser Ordner konnte nicht geöffnet werden");
+                        continue;
+                    }
                     Input::NewDir(name) => {
                         fs::create_dir(name).unwrap_or_else(|err|{
                             println!("{}", err.kind());
@@ -117,10 +122,6 @@ pub fn run(config: Config) -> Result<(), String>{
                         continue;
                     }
                     Input::Quit => return Ok(()),
-                    _ => {
-                        println!("Bitte gib eine gültige Option ein");
-                        continue;
-                    }
                 },
             Err(string) => {
                 println!("{string}"); 
