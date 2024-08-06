@@ -101,9 +101,8 @@ pub fn run(config: Config) -> Result<(), String> {
                     size
                 }
                 Input::DirName(name) => {
-                    let dir = dir.to_str().unwrap().to_string() + "/" + &name.trim();
-                    if Path::new(&dir).is_dir() {
-                        env::set_current_dir(dir).unwrap_or_else(handle_err);
+                    if Path::new(&name.trim()).is_dir() {
+                        env::set_current_dir(name.trim()).unwrap_or_else(handle_err);
                     }
                     else {
                         println!("{}", if let Err(err) = open_file(Path::new(&name)){
