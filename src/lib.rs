@@ -46,29 +46,40 @@ fn open_file(file: &Path) -> io::Error{
         .exec()
 }
 
-fn print_dirs (paths: fs::ReadDir, list_all: bool) -> usize {
+fn print_dirs (paths: &Vec<PathBuf>) -> usize {
     println!("0: ..");
     let mut i: usize = 0;
     for path in paths{
-        let dir_entry = &path.unwrap();
-        let path = &dir_entry.path();
-        let element = path.file_name().unwrap();
-        if list_all || !element.to_str().unwrap().starts_with("."){
-            i += 1;
-            println!("{}. {}", i, element.to_str().unwrap());
-        }
+        i += 1;
+        println!("{}. {}", i, path.file_name().unwrap().to_str().unwrap());
     }
     i
 }
+
+fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf>{
+    let mut result: Vec<PathBuf> = vec![];
+    for i in elements{
+        if !i.file_name().unwrap().to_str().unwrap().starts_with("."){
+            result.push(i);
+        }
+    }
+    result
+}
+
 pub fn run(config: Config) -> Result<(), String>{
     loop{
         let dir = env::current_dir().unwrap();
         let mut dir = dir.as_path();
 
-        let paths = dir.read_dir().unwrap();
+        let mut paths = dir.read_dir().unwrap().map(|res| res.map(|e| e.path()))
+            .collect::<Result<Vec<_>, io::Error>>().unwrap();
+
+        if !config.list_all{
+            paths = filter_elements(paths);
+        }
 
         println!("\n{}:", dir.to_str().unwrap());
-        let paths_num = print_dirs(paths, config.list_all);
+        let paths_num = print_dirs(&paths);
 
         let input = match Input::get_input() {
             Ok(input) => match input{
@@ -111,8 +122,6 @@ pub fn run(config: Config) -> Result<(), String>{
             },
         };
 
-        let mut paths = dir.read_dir().unwrap();
-        let as_path: PathBuf;
         dir = if input == 0{
             if let Some(path) = dir.parent(){
                 path
@@ -123,8 +132,7 @@ pub fn run(config: Config) -> Result<(), String>{
             }
         }
         else {
-            as_path = paths.nth(input-1).unwrap().unwrap().path();
-            Path::new(&as_path)
+            Path::new(&paths[input-1])
         };
         if dir.is_file(){
             println!("{}", open_file(&dir));
