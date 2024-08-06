@@ -127,6 +127,13 @@ pub fn run(config: Config) -> Result<(), String> {
                     }
                     continue;
                 }
+                Input::Command(cmd) => {
+                    Command::new("sh")
+                    .arg("-c")
+                    .arg(cmd)
+                    .status().expect("Fehler beim ausführen des Befehls: ");
+                    continue;
+                }
                 Input::ListAll => {
                     list_all_once = true;
                     continue;

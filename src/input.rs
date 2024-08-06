@@ -6,6 +6,7 @@ pub enum Input {
     DirName(String),
     NewDir(String),
     Rm(String),
+    Command(String),
     Quit,
 }
 
@@ -35,6 +36,14 @@ impl Input {
                 Ok(Self::Rm(input.trim().to_string()))
             }
             "a" => Ok(Self::ListAll),
+            "cmd" => {
+                input = "".to_string();
+                print!("$: ");
+                io::stdout().flush().unwrap();
+                io::stdin().read_line(&mut input).expect("Input error");
+                
+                Ok(Self::Command(input))
+            }
             _ => {
                 if let Ok(usize) = input.trim().parse() {
                     Ok(Self::Choose(usize))
