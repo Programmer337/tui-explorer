@@ -1,9 +1,9 @@
 use std::env;
 use std::fs;
 use std::io::{self, Write};
-use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::process::ExitStatus;
 use std::usize;
 
 use input::*;
@@ -33,13 +33,13 @@ impl Config {
     }
 }
 
-fn open_file(file: &Path) -> io::Error {
+fn open_file(file: &Path) -> io::Result<ExitStatus> {
     print!("Programm zum Öffnen der Datei: ");
     io::stdout().flush().unwrap();
     let mut input = String::new();
     io::stdin().read_line(&mut input).expect("Input Error");
 
-    Command::new(input.trim()).arg(file).exec()
+    Command::new(input.trim()).arg(file).status()
 }
 
 fn print_dirs(paths: &Vec<PathBuf>) -> usize {
@@ -104,7 +104,14 @@ pub fn run(config: Config) -> Result<(), String> {
                         }
                     }
                     else {
-                        eprintln!("Fehler: {}", open_file(Path::new(&dir)));
+                        println!("{}", if let Err(err) = open_file(Path::new(&name)){
+                            if err.kind() == io::ErrorKind::NotFound{
+                                "Programm exestiert nicht".to_string()
+                            }
+                            else {
+                                err.kind().to_string()
+                            }
+                        }else{String::from("")});
                     }
                     continue;
                 }
@@ -157,7 +164,14 @@ pub fn run(config: Config) -> Result<(), String> {
             Path::new(&paths[input - 1])
         };
         if dir.is_file() {
-            println!("{}", open_file(&dir));
+            println!("{}", if let Err(err) = open_file(&dir){
+                if err.kind() == io::ErrorKind::NotFound{
+                    "Programm exestiert nicht".to_string()
+                }
+                else {
+                    err.kind().to_string()
+                }
+            }else{String::from("")});
             continue;
         }
         env::set_current_dir(dir).expect("Dieser Ordner konnte nicht geöffnet werden");
