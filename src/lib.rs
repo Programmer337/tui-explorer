@@ -15,7 +15,7 @@ pub struct Config {
 }
 impl Config {
     pub fn read_conf() -> Self {
-        let as_string: u8 = env::var("list-all")
+        let as_string: u8 = env::var("LIST_ALL")
             .unwrap_or_else(|_err| "0".to_string())
             .trim()
             .parse()
