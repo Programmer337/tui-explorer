@@ -7,6 +7,5 @@ fn main() {
     }
 }
 
-/*Ordnernamen eingeben = in diesen navigieren
-* Comondos einegeben
+/*Comondos eingeben
 */

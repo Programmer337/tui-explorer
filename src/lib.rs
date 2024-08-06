@@ -1,6 +1,6 @@
 use std::env;
-use std::io::{self, Write};
 use std::fs;
+use std::io::{self, Write};
 use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -10,72 +10,72 @@ use input::*;
 
 mod input;
 
-pub struct Config{
+pub struct Config {
     list_all: bool,
 }
 impl Config {
-    pub fn read_conf() -> Self{
-        let as_string: u8 = env::var("list-all").unwrap_or_else(|_err|{
-            "0".to_string()
-        }).trim().parse().unwrap_or_else(|_err|{
-            0
-        });
+    pub fn read_conf() -> Self {
+        let as_string: u8 = env::var("list-all")
+            .unwrap_or_else(|_err| "0".to_string())
+            .trim()
+            .parse()
+            .unwrap_or_else(|_err| 0);
         let mut list_all: bool = match as_string {
             0 => false,
             _ => true,
         };
 
-        if env::args().nth(1).unwrap_or("0".to_string()) == "--list-all".to_string(){
+        if env::args().nth(1).unwrap_or("0".to_string()) == "--list-all".to_string() {
             list_all = true;
         };
 
-        Self{list_all}
+        Self { list_all }
     }
 }
 
-fn open_file(file: &Path) -> io::Error{
+fn open_file(file: &Path) -> io::Error {
     print!("Programm zum Öffnen der Datei: ");
     io::stdout().flush().unwrap();
     let mut input = String::new();
-    io::stdin()
-        .read_line(&mut input)
-        .expect("Input Error");
+    io::stdin().read_line(&mut input).expect("Input Error");
 
-    Command::new(input.trim())
-        .arg(file)
-        .exec()
+    Command::new(input.trim()).arg(file).exec()
 }
 
-fn print_dirs (paths: &Vec<PathBuf>) -> usize {
+fn print_dirs(paths: &Vec<PathBuf>) -> usize {
     println!("0: ..");
     let mut i: usize = 0;
-    for path in paths{
+    for path in paths {
         i += 1;
         println!("{}. {}", i, path.file_name().unwrap().to_str().unwrap());
     }
     i
 }
 
-fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf>{
+fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf> {
     let mut result: Vec<PathBuf> = vec![];
-    for i in elements{
-        if !i.file_name().unwrap().to_str().unwrap().starts_with("."){
+    for i in elements {
+        if !i.file_name().unwrap().to_str().unwrap().starts_with(".") {
             result.push(i);
         }
     }
     result
 }
 
-pub fn run(config: Config) -> Result<(), String>{
+pub fn run(config: Config) -> Result<(), String> {
     let mut list_all_once = false;
-    loop{
+    loop {
         let dir = env::current_dir().unwrap();
         let mut dir = dir.as_path();
 
-        let mut paths = dir.read_dir().unwrap().map(|res| res.map(|e| e.path()))
-            .collect::<Result<Vec<_>, io::Error>>().unwrap();
+        let mut paths = dir
+            .read_dir()
+            .unwrap()
+            .map(|res| res.map(|e| e.path()))
+            .collect::<Result<Vec<_>, io::Error>>()
+            .unwrap();
 
-        if !config.list_all && !list_all_once{
+        if !config.list_all && !list_all_once {
             paths = filter_elements(paths);
         }
         list_all_once = false;
@@ -84,67 +84,75 @@ pub fn run(config: Config) -> Result<(), String>{
         let paths_num = print_dirs(&paths);
 
         let input = match Input::get_input() {
-            Ok(input) => match input{
-                    Input::Choose(size) => {
-                        if size > paths_num {
-                            eprintln!("Keine Gültige Option");
-                            continue;
-                        }
-                        size
-                    }
-                    Input::DirName(name) => {
-                        let dir = dir.to_str().unwrap().to_string() + "/" + &name.trim();
-                        env::set_current_dir(dir).expect("Dieser Ordner konnte nicht geöffnet werden");
+            Ok(input) => match input {
+                Input::Choose(size) => {
+                    if size > paths_num {
+                        eprintln!("Keine Gültige Option");
                         continue;
                     }
-                    Input::NewDir(name) => {
-                        fs::create_dir(name).unwrap_or_else(|err|{
+                    size
+                }
+                Input::DirName(name) => {
+                    let dir = dir.to_str().unwrap().to_string() + "/" + &name.trim();
+                    if Path::new(&dir).is_dir() {
+                        if let Err(err) = env::set_current_dir(dir) {
+                            if err.kind() == io::ErrorKind::NotFound {
+                                eprintln!("Ordner exestiert nicht");
+                            } else {
+                                eprintln!("Fehler: {}", err.kind());
+                            }
+                        }
+                    }
+                    else {
+                        eprintln!("Fehler: {}", open_file(Path::new(&dir)));
+                    }
+                    continue;
+                }
+                Input::NewDir(name) => {
+                    fs::create_dir(name).unwrap_or_else(|err| {
+                        println!("{}", err.kind());
+                    });
+                    continue;
+                }
+                Input::Rm(name) => {
+                    let as_path = Path::new(&name);
+                    if as_path.is_dir() {
+                        fs::remove_dir_all(name).unwrap_or_else(|err| {
                             println!("{}", err.kind());
                         });
-                        continue;
+                    } else {
+                        fs::remove_file(as_path).unwrap_or_else(|err| {
+                            println!("{}", err.kind());
+                        });
                     }
-                    Input::Rm(name) => {
-                        let as_path = Path::new(&name);
-                        if as_path.is_dir(){
-                            fs::remove_dir_all(name).unwrap_or_else(|err|{
-                                println!("{}", err.kind());
-                            });
-                        }
-                        else {
-                            fs::remove_file(as_path).unwrap_or_else(|err|{
-                                println!("{}", err.kind());
-                            });
-                        }
-                        continue;
-                    }
-                    Input::ListAll => {
-                        list_all_once = true;
-                        continue;
-                    }
-                    Input::Quit => return Ok(()),
-                },
-            Err(string) => {
-                println!("{string}"); 
-                continue;
+                    continue;
+                }
+                Input::ListAll => {
+                    list_all_once = true;
+                    continue;
+                }
+                Input::Quit => return Ok(()),
             },
+            Err(string) => {
+                println!("{string}");
+                continue;
+            }
         };
 
-        dir = if input == 0{
-            if let Some(path) = dir.parent(){
+        dir = if input == 0 {
+            if let Some(path) = dir.parent() {
                 path
-            }
-            else {
+            } else {
                 eprintln!("Kein Überverzeichniss");
                 continue;
             }
-        }
-        else {
-            Path::new(&paths[input-1])
+        } else {
+            Path::new(&paths[input - 1])
         };
-        if dir.is_file(){
+        if dir.is_file() {
             println!("{}", open_file(&dir));
             continue;
         }
         env::set_current_dir(dir).expect("Dieser Ordner konnte nicht geöffnet werden");
-    } 
+    }
 }
