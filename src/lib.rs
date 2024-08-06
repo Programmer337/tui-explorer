@@ -64,6 +64,14 @@ fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf> {
 
 pub fn run(config: Config) -> Result<(), String> {
     let mut list_all_once = false;
+    let handle_err = |err: io::Error|{
+        eprintln!("{}", match err.kind() {
+            io::ErrorKind::NotFound => "Datei oder Verzeichniss exestiert nicht".to_string(),
+            io::ErrorKind::PermissionDenied => "keine Berechtigung".to_string(),
+            io::ErrorKind::AlreadyExists => "Verzeichniss exestiert bereits".to_string(),
+            _ => err.kind().to_string()
+        })
+    };
     loop {
         let dir = env::current_dir().unwrap();
         let mut dir = dir.as_path();
@@ -95,13 +103,7 @@ pub fn run(config: Config) -> Result<(), String> {
                 Input::DirName(name) => {
                     let dir = dir.to_str().unwrap().to_string() + "/" + &name.trim();
                     if Path::new(&dir).is_dir() {
-                        if let Err(err) = env::set_current_dir(dir) {
-                            if err.kind() == io::ErrorKind::NotFound {
-                                eprintln!("Ordner exestiert nicht");
-                            } else {
-                                eprintln!("Fehler: {}", err.kind());
-                            }
-                        }
+                        env::set_current_dir(dir).unwrap_or_else(handle_err);
                     }
                     else {
                         println!("{}", if let Err(err) = open_file(Path::new(&name)){
@@ -116,21 +118,15 @@ pub fn run(config: Config) -> Result<(), String> {
                     continue;
                 }
                 Input::NewDir(name) => {
-                    fs::create_dir(name).unwrap_or_else(|err| {
-                        println!("{}", err.kind());
-                    });
+                    fs::create_dir(name).unwrap_or_else(handle_err);
                     continue;
                 }
                 Input::Rm(name) => {
                     let as_path = Path::new(&name);
                     if as_path.is_dir() {
-                        fs::remove_dir_all(name).unwrap_or_else(|err| {
-                            println!("{}", err.kind());
-                        });
+                        fs::remove_dir_all(name).unwrap_or_else(handle_err);
                     } else {
-                        fs::remove_file(as_path).unwrap_or_else(|err| {
-                            println!("{}", err.kind());
-                        });
+                        fs::remove_file(as_path).unwrap_or_else(handle_err);
                     }
                     continue;
                 }
@@ -174,6 +170,6 @@ pub fn run(config: Config) -> Result<(), String> {
             }else{String::from("")});
             continue;
         }
-        env::set_current_dir(dir).expect("Dieser Ordner konnte nicht geöffnet werden");
+        env::set_current_dir(dir).unwrap_or_else(handle_err);
     }
 }

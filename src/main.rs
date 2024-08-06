@@ -7,5 +7,5 @@ fn main() {
     }
 }
 
-/*Comondos eingeben
+/*Ordner/Dateien kopieren, verschieben und umbennen
 */
