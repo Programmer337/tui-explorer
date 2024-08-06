@@ -2,6 +2,7 @@ use std::io::{self, Write};
 
 pub enum Input {
     Choose(usize),
+    ListAll,
     DirName(String),
     NewDir(String),
     Rm(String),
@@ -33,6 +34,7 @@ impl Input {
 
                 Ok(Self::Rm(input.trim().to_string()))
             }
+            "a" => Ok(Self::ListAll),
             _ => {
                 if let Ok(usize) = input.trim().parse() {
                     Ok(Self::Choose(usize))

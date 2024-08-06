@@ -67,6 +67,7 @@ fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf>{
 }
 
 pub fn run(config: Config) -> Result<(), String>{
+    let mut list_all_once = false;
     loop{
         let dir = env::current_dir().unwrap();
         let mut dir = dir.as_path();
@@ -74,9 +75,10 @@ pub fn run(config: Config) -> Result<(), String>{
         let mut paths = dir.read_dir().unwrap().map(|res| res.map(|e| e.path()))
             .collect::<Result<Vec<_>, io::Error>>().unwrap();
 
-        if !config.list_all{
+        if !config.list_all && !list_all_once{
             paths = filter_elements(paths);
         }
+        list_all_once = false;
 
         println!("\n{}:", dir.to_str().unwrap());
         let paths_num = print_dirs(&paths);
@@ -108,6 +110,10 @@ pub fn run(config: Config) -> Result<(), String>{
                                 println!("{}", err.kind());
                             });
                         }
+                        continue;
+                    }
+                    Input::ListAll => {
+                        list_all_once = true;
                         continue;
                     }
                     Input::Quit => return Ok(()),

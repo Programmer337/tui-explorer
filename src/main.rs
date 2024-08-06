@@ -7,7 +7,6 @@ fn main() {
     }
 }
 
-/*Comondos einegeben
-* Ordnernamen eingeben = in diesen navigieren
-* Configfunnktion (siehe Turorial)
+/*Ordnernamen eingeben = in diesen navigieren
+* Comondos einegeben
 */
