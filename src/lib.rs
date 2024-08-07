@@ -116,16 +116,25 @@ pub fn run(config: Config) -> Result<(), String> {
                     }
                     continue;
                 }
+                Input::Copy(from, to) => {
+                    fs::copy(&from, &to).unwrap_or_else(|err|{
+                        eprintln!("{err}");
+                        dbg!(from);
+                        dbg!(to);
+                        0
+                    });
+                    continue;
+                }
                 Input::NewDir(name) => {
                     fs::create_dir(name).unwrap_or_else(handle_err);
                     continue;
                 }
                 Input::Rm(name) => {
-                    let as_path = Path::new(&name);
+                    let as_path = Path::new(name.trim());
                     if as_path.is_dir() {
-                        fs::remove_dir_all(name).unwrap_or_else(handle_err);
+                        fs::remove_dir_all(name.trim()).unwrap_or_else(handle_err);
                     } else {
-                        fs::remove_file(as_path).unwrap_or_else(handle_err);
+                        fs::remove_file(name.trim()).unwrap_or_else(handle_err);
                     }
                     continue;
                 }

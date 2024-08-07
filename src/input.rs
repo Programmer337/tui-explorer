@@ -4,6 +4,7 @@ pub enum Input {
     Choose(usize),
     ListAll,
     DirName(String),
+    Copy(String, String),
     NewDir(String),
     Rm(String),
     Command(String),
@@ -20,6 +21,20 @@ impl Input {
 
         match input.trim() {
             "q" => Ok(Self::Quit),
+            "cp" => {
+                let mut from = String::from("");
+                print!("Von: ");
+                io::stdout().flush().unwrap();
+                io::stdin().read_line(&mut from).expect("Input error");
+
+                let mut to = String::from("");
+                print!("Nach: ");
+                io::stdout().flush().unwrap();
+                io::stdin().read_line(&mut to).expect("Input error");
+
+                Ok(Self::Copy(from.trim().to_string(), to.trim().to_string()))
+                
+            }
             "mkdir" => {
                 input = String::from("");
                 print!("Name: ");
@@ -48,7 +63,7 @@ impl Input {
                 if let Ok(usize) = input.trim().parse() {
                     Ok(Self::Choose(usize))
                 } else {
-                    Ok(Self::DirName(input))
+                    Ok(Self::DirName(input.trim().to_string()))
                 }
             }
         }
