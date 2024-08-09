@@ -1,6 +1,12 @@
 [package]
 name = "tui-explorer"
 version = "0.1.0"
+license = "MIT"
 edition = "2021"
+description = "A file explorer for a command line interface"
+repository = "https://github.com/Programmer337/tui-explorer"
+keywords = ["explorer", "CLI", "TUI", "filemanager"]
+categories = ["command-line-utilities", "filesystem"]   
+
 
 [dependencies]
