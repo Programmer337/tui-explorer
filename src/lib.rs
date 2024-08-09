@@ -62,16 +62,33 @@ fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf> {
     result
 }
 
+fn copy_dir(from: &Path, to: &Path){
+    if from.is_dir(){
+        if !to.exists(){
+            fs::create_dir_all(&to).unwrap_or_else(handle_err);
+        }
+        let paths = fs::read_dir(&from).expect("Fehler beim lesen des Ordners");
+        for dir in paths{
+            copy_dir(dir.as_ref().unwrap().path().as_path(), &to.join(dir.unwrap().file_name()));
+        }
+    }
+    else {
+        fs::copy(from, to).unwrap_or_else(|err|{
+            eprintln!("{err}");
+            0
+        });
+    }
+}
+fn handle_err(err: io::Error){
+    eprintln!("{}", match err.kind() {
+        io::ErrorKind::NotFound => "Datei oder Verzeichniss exestiert nicht".to_string(),
+        io::ErrorKind::PermissionDenied => "keine Berechtigung".to_string(),
+        io::ErrorKind::AlreadyExists => "Verzeichniss exestiert bereits".to_string(),
+        _ => err.kind().to_string()
+    })
+}
 pub fn run(config: Config) -> Result<(), String> {
     let mut list_all_once = false;
-    let handle_err = |err: io::Error|{
-        eprintln!("{}", match err.kind() {
-            io::ErrorKind::NotFound => "Datei oder Verzeichniss exestiert nicht".to_string(),
-            io::ErrorKind::PermissionDenied => "keine Berechtigung".to_string(),
-            io::ErrorKind::AlreadyExists => "Verzeichniss exestiert bereits".to_string(),
-            _ => err.kind().to_string()
-        })
-    };
     loop {
         let dir = env::current_dir().unwrap();
         let mut dir = dir.as_path();
@@ -112,17 +129,12 @@ pub fn run(config: Config) -> Result<(), String> {
                             else {
                                 err.kind().to_string()
                             }
-                        }else{String::from("")});
+                        }else{String::from("")});   
                     }
                     continue;
                 }
                 Input::Copy(from, to) => {
-                    fs::copy(&from, &to).unwrap_or_else(|err|{
-                        eprintln!("{err}");
-                        dbg!(from);
-                        dbg!(to);
-                        0
-                    });
+                    copy_dir(Path::new(&from), Path::new(&to));
                     continue;
                 }
                 Input::NewDir(name) => {
