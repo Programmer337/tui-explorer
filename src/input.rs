@@ -1,5 +1,6 @@
 use std::io::{self, Write};
 
+/// stores the user's input
 pub enum Input {
     Choose(usize),
     ListAll,
@@ -12,6 +13,10 @@ pub enum Input {
 }
 
 impl Input {
+
+    /// reads input and returns it in a Result
+    /// # Panics
+    /// Input Errors
     pub fn get_input() -> Result<Self, String> {
         print!("Wähle eine Option: ");
         io::stdout().flush().unwrap();

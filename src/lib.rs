@@ -14,6 +14,9 @@ pub struct Config {
     list_all: bool,
 }
 impl Config {
+    ///reads the config and returns an instance of Config
+    /// # Panics
+    /// args are not valid unicode
     pub fn read_conf() -> Self {
         let as_string: u8 = env::var("LIST_ALL")
             .unwrap_or_else(|_err| "0".to_string())
@@ -33,6 +36,11 @@ impl Config {
     }
 }
 
+/// opens a file
+/// # Errors
+/// Command::status returns an error
+/// # Panics
+/// Any Errors while getting input
 fn open_file(file: &Path) -> io::Result<ExitStatus> {
     print!("Programm zum Öffnen der Datei: ");
     io::stdout().flush().unwrap();
@@ -42,6 +50,9 @@ fn open_file(file: &Path) -> io::Result<ExitStatus> {
     Command::new(input.trim()).arg(file).status()
 }
 
+/// prints out all directorys and returns the total size of elements
+/// # Panics
+/// an element is not valid unicode
 fn print_dirs(paths: &Vec<PathBuf>) -> usize {
     println!("0: ..");
     let mut i: usize = 0;
@@ -52,6 +63,9 @@ fn print_dirs(paths: &Vec<PathBuf>) -> usize {
     i
 }
 
+/// filters out all elemts that start with '.'
+/// # Panics
+/// an element is not valid unicode
 fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf> {
     let mut result: Vec<PathBuf> = vec![];
     for i in elements {
@@ -62,6 +76,10 @@ fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf> {
     result
 }
 
+/// rekursive function, that copies a whole directory
+/// # Panics
+/// subdiretory can't be read.
+/// TODO: handle this error better
 fn copy_dir(from: &Path, to: &Path){
     if from.is_dir(){
         if !to.exists(){
@@ -79,6 +97,8 @@ fn copy_dir(from: &Path, to: &Path){
         });
     }
 }
+
+/// takes io::Error and prints a specific Message to stderr
 fn handle_err(err: io::Error){
     eprintln!("{}", match err.kind() {
         io::ErrorKind::NotFound => "Datei oder Verzeichniss exestiert nicht".to_string(),
@@ -87,6 +107,11 @@ fn handle_err(err: io::Error){
         _ => err.kind().to_string()
     })
 }
+
+/// runs the programm
+/// # Panics
+/// current_dir is unvalid or the user lacks permission
+/// cmd options returns Error
 pub fn run(config: Config) -> Result<(), String> {
     let mut list_all_once = false;
     loop {
