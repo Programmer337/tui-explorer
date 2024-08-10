@@ -7,7 +7,7 @@ description = "A file explorer for a command line interface"
 repository = "https://github.com/Programmer337/tui-explorer"
 keywords = ["explorer", "CLI", "TUI", "filemanager"]
 categories = ["command-line-utilities", "filesystem"]
-readme = "REAMDE.md"   
+readme = "README.md"   
 
 
 [dependencies]
