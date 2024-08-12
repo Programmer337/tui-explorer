@@ -11,3 +11,5 @@ readme = "README.md"
 
 
 [dependencies]
+fluent-templates = "0.9.4"
+unic-langid = "0.9.5"

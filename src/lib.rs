@@ -5,20 +5,34 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::ExitStatus;
 use std::usize;
+use unic_langid::{LanguageIdentifier, langid};
+use fluent_templates::{Loader, static_loader};
 
 use input::*;
 
 mod input;
 
+static_loader! {
+    static LOCALES = {
+        locales: "locales",
+        fallback_language: "en-US",
+        // Removes unicode isolating marks around arguments, you typically
+        // should only set to false when testing.
+        customise: |bundle| bundle.set_use_isolating(true),
+    };
+}
+
 pub struct Config {
     list_all: bool,
+    language: LanguageIdentifier,
 }
 impl Config {
-    ///reads the config and returns an instance of Config
+    /// reads the config and returns an instance of Config
     /// # Panics
     /// args are not valid unicode
     pub fn read_conf() -> Self {
-        let as_string: u8 = env::var("LIST_ALL")
+        // Reading list_all 
+        let mut as_string: u8 = env::var("LIST_ALL")
             .unwrap_or_else(|_err| "0".to_string())
             .trim()
             .parse()
@@ -32,7 +46,22 @@ impl Config {
             list_all = true;
         };
 
-        Self { list_all }
+        // Reading language
+        let mut as_string = String::from("");
+        // Cuts up Unicode Identifier e.g en_US.UTF-8
+        for i in env::var("LANG").unwrap_or("en_US".into()).chars() {
+            if i == '.'{
+                break;
+            }
+            as_string += &String::from(i);
+        }
+        let language = as_string.parse().unwrap_or_else(|err|{
+            eprintln!("{}", err);
+            langid!("en_US")
+        });
+        
+        
+        Self { list_all, language }
     }
 }
 
