@@ -6,6 +6,3 @@ fn main() {
         process::exit(1);
     }
 }
-
-/*Ordner/Dateien kopieren, verschieben und umbennen
-*/
