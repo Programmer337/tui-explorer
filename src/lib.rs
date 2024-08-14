@@ -1,3 +1,4 @@
+use fluent_templates::{static_loader, Loader};
 use std::env;
 use std::fs;
 use std::io::{self, Write};
@@ -5,8 +6,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::process::ExitStatus;
 use std::usize;
-use unic_langid::{LanguageIdentifier, langid};
-use fluent_templates::{Loader, static_loader};
+use unic_langid::{langid, LanguageIdentifier};
 
 use input::*;
 
@@ -31,18 +31,18 @@ impl Config {
     /// # Panics
     /// args are not valid unicode
     pub fn read_conf() -> Self {
-        // Reading list_all 
+        // Reading list_all
         let as_string: u8 = env::var("LIST_ALL")
             .unwrap_or_else(|_err| "0".to_string())
             .trim()
             .parse()
-            .unwrap_or_else(|_err| 0);
+            .unwrap_or(0);
         let mut list_all: bool = match as_string {
             0 => false,
             _ => true,
         };
 
-        if env::args().nth(1).unwrap_or("0".to_string()) == "--list-all".to_string() {
+        if env::args().nth(1).unwrap_or("0".to_string()) == *"--list-all" {
             list_all = true;
         };
 
@@ -50,17 +50,16 @@ impl Config {
         let mut as_string = String::from("");
         // Cuts up Unicode Identifier e.g en_US.UTF-8
         for i in env::var("LANG").unwrap_or("en_US".into()).chars() {
-            if i == '.'{
+            if i == '.' {
                 break;
             }
             as_string += &String::from(i);
         }
-        let language = as_string.parse().unwrap_or_else(|err|{
+        let language = as_string.parse().unwrap_or_else(|err| {
             eprintln!("{}", err);
             langid!("en_US")
         });
-        
-        
+
         Self { list_all, language }
     }
 }
@@ -74,7 +73,9 @@ fn open_file(file: &Path, lang: &LanguageIdentifier) -> io::Result<ExitStatus> {
     print!("{}", LOCALES.lookup(lang, "ask-for-program"));
     io::stdout().flush().unwrap();
     let mut input = String::new();
-    io::stdin().read_line(&mut input).expect(&LOCALES.lookup(lang, "input-error"));
+    io::stdin()
+        .read_line(&mut input)
+        .unwrap_or_else(|_| panic!("{}", LOCALES.lookup(lang, "input-error")));
 
     Command::new(input.trim()).arg(file).status()
 }
@@ -106,24 +107,27 @@ fn filter_elements(elements: Vec<PathBuf>) -> Vec<PathBuf> {
 }
 
 /// rekursive function, that copies a whole directory
-fn copy_dir(from: &Path, to: &Path, lang: &LanguageIdentifier){
-    if from.is_dir(){
-        if !to.exists(){
-            fs::create_dir_all(&to).unwrap_or_else(|err| handle_err(err, lang));
+fn copy_dir(from: &Path, to: &Path, lang: &LanguageIdentifier) {
+    if from.is_dir() {
+        if !to.exists() {
+            fs::create_dir_all(to).unwrap_or_else(|err| handle_err(err, lang));
         }
-        let paths = match  fs::read_dir(&from){
+        let paths = match fs::read_dir(from) {
             Ok(paths) => paths,
             Err(err) => {
                 handle_err(err, lang);
                 return;
             }
         };
-        for dir in paths{
-            copy_dir(dir.as_ref().unwrap().path().as_path(), &to.join(dir.unwrap().file_name()), lang);
+        for dir in paths {
+            copy_dir(
+                dir.as_ref().unwrap().path().as_path(),
+                &to.join(dir.unwrap().file_name()),
+                lang,
+            );
         }
-    }
-    else {
-        fs::copy(from, to).unwrap_or_else(|err|{
+    } else {
+        fs::copy(from, to).unwrap_or_else(|err| {
             eprintln!("{err}");
             0
         });
@@ -131,13 +135,16 @@ fn copy_dir(from: &Path, to: &Path, lang: &LanguageIdentifier){
 }
 
 /// takes io::Error and prints a specific Message to stderr
-fn handle_err(err: io::Error, lang: &LanguageIdentifier){
-    eprintln!("{}", match err.kind() {
-        io::ErrorKind::NotFound => LOCALES.lookup(lang, "err-not-found"),
-        io::ErrorKind::PermissionDenied => LOCALES.lookup(lang, "err-permission-denied"),
-        io::ErrorKind::AlreadyExists => LOCALES.lookup(lang, "err-already-exists"),
-        _ => err.kind().to_string()
-    })
+fn handle_err(err: io::Error, lang: &LanguageIdentifier) {
+    eprintln!(
+        "{}",
+        match err.kind() {
+            io::ErrorKind::NotFound => LOCALES.lookup(lang, "err-not-found"),
+            io::ErrorKind::PermissionDenied => LOCALES.lookup(lang, "err-permission-denied"),
+            io::ErrorKind::AlreadyExists => LOCALES.lookup(lang, "err-already-exists"),
+            _ => err.kind().to_string(),
+        }
+    )
 }
 
 /// runs the programm
@@ -175,17 +182,21 @@ pub fn run(config: Config) -> Result<(), String> {
                 }
                 Input::DirName(name) => {
                     if Path::new(&name.trim()).is_dir() {
-                        env::set_current_dir(name.trim()).unwrap_or_else(|err| handle_err(err, &config.language));
-                    }
-                    else {
-                        println!("{}", if let Err(err) = open_file(Path::new(&name), &config.language){
-                            if err.kind() == io::ErrorKind::NotFound{
-                                LOCALES.lookup(&config.language, "program-doesnt-exist")
+                        env::set_current_dir(name.trim())
+                            .unwrap_or_else(|err| handle_err(err, &config.language));
+                    } else {
+                        println!(
+                            "{}",
+                            if let Err(err) = open_file(Path::new(&name), &config.language) {
+                                if err.kind() == io::ErrorKind::NotFound {
+                                    LOCALES.lookup(&config.language, "program-doesnt-exist")
+                                } else {
+                                    err.kind().to_string()
+                                }
+                            } else {
+                                String::from("")
                             }
-                            else {
-                                err.kind().to_string()
-                            }
-                        }else{String::from("")});   
+                        );
                     }
                     continue;
                 }
@@ -200,9 +211,11 @@ pub fn run(config: Config) -> Result<(), String> {
                 Input::Rm(name) => {
                     let as_path = Path::new(name.trim());
                     if as_path.is_dir() {
-                        fs::remove_dir_all(name.trim()).unwrap_or_else(|err| handle_err(err, &config.language));
+                        fs::remove_dir_all(name.trim())
+                            .unwrap_or_else(|err| handle_err(err, &config.language));
                     } else {
-                        fs::remove_file(name.trim()).unwrap_or_else(|err| handle_err(err, &config.language));
+                        fs::remove_file(name.trim())
+                            .unwrap_or_else(|err| handle_err(err, &config.language));
                     }
                     continue;
                 }
@@ -235,16 +248,20 @@ pub fn run(config: Config) -> Result<(), String> {
             Path::new(&paths[input - 1])
         };
         if dir.is_file() {
-            println!("{}", if let Err(err) = open_file(&dir, &config.language){
-                if err.kind() == io::ErrorKind::NotFound{
-                    LOCALES.lookup(&config.language, "program-doesnt-exist")
+            println!(
+                "{}",
+                if let Err(err) = open_file(dir, &config.language) {
+                    if err.kind() == io::ErrorKind::NotFound {
+                        LOCALES.lookup(&config.language, "program-doesnt-exist")
+                    } else {
+                        err.kind().to_string()
+                    }
+                } else {
+                    String::from("")
                 }
-                else {
-                    err.kind().to_string()
-                }
-            }else{String::from("")});
+            );
             continue;
         }
-        env::set_current_dir(dir).unwrap_or_else(|err| handle_err(err, &config.language));           
+        env::set_current_dir(dir).unwrap_or_else(|err| handle_err(err, &config.language));
     }
 }

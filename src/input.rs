@@ -17,7 +17,6 @@ pub enum Input {
 }
 
 impl Input {
-
     /// reads input and returns it in a Result
     /// # Panics
     /// Input Errors
@@ -26,7 +25,9 @@ impl Input {
         io::stdout().flush().unwrap();
 
         let mut input = String::new();
-        io::stdin().read_line(&mut input).expect(&LOCALES.lookup(lang, "input-error"));
+        io::stdin()
+            .read_line(&mut input)
+            .unwrap_or_else(|_| panic!("{}", LOCALES.lookup(lang, "input-error")));
 
         match input.trim() {
             "q" => Ok(Self::Quit),
@@ -34,12 +35,16 @@ impl Input {
                 let mut from = String::from("");
                 print!("{} ", LOCALES.lookup(lang, "from"));
                 io::stdout().flush().unwrap();
-                io::stdin().read_line(&mut from).expect(&LOCALES.lookup(lang, "input-error"));
+                io::stdin()
+                    .read_line(&mut from)
+                    .unwrap_or_else(|_| panic!("{}", LOCALES.lookup(lang, "input-error")));
 
                 let mut to = String::from("");
                 print!("{} ", LOCALES.lookup(lang, "to"));
                 io::stdout().flush().unwrap();
-                io::stdin().read_line(&mut to).expect(&LOCALES.lookup(lang, "input-error"));
+                io::stdin()
+                    .read_line(&mut to)
+                    .unwrap_or_else(|_| panic!("{}", LOCALES.lookup(lang, "input-error")));
 
                 Ok(Self::Copy(from.trim().to_string(), to.trim().to_string()))
             }
@@ -47,14 +52,18 @@ impl Input {
                 input = String::from("");
                 print!("Name: ");
                 io::stdout().flush().unwrap();
-                io::stdin().read_line(&mut input).expect(&LOCALES.lookup(lang, "input-error"));
+                io::stdin()
+                    .read_line(&mut input)
+                    .unwrap_or_else(|_| panic!("{}", LOCALES.lookup(lang, "input-error")));
                 Ok(Self::NewDir(input.trim().to_string()))
             }
             "rm" => {
                 input = String::from("");
                 print!("Name: ");
                 io::stdout().flush().unwrap();
-                io::stdin().read_line(&mut input).expect(&LOCALES.lookup(lang, "input-error"));
+                io::stdin()
+                    .read_line(&mut input)
+                    .unwrap_or_else(|_| panic!("{}", LOCALES.lookup(lang, "input-error")));
 
                 Ok(Self::Rm(input.trim().to_string()))
             }
@@ -63,8 +72,10 @@ impl Input {
                 input = "".to_string();
                 print!("$: ");
                 io::stdout().flush().unwrap();
-                io::stdin().read_line(&mut input).expect(&LOCALES.lookup(lang, "input-error"));
-                
+                io::stdin()
+                    .read_line(&mut input)
+                    .unwrap_or_else(|_| panic!("{}", LOCALES.lookup(lang, "input-error")));
+
                 Ok(Self::Command(input))
             }
             _ => {
