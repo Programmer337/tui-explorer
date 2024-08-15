@@ -21,9 +21,9 @@ This start this will list all files and subdirs of the current dir. You will hav
 * cmd -> enter the command line
 * q -> quit the program 
 ### commandline options and environment variables
-To see all directories and files you can use `tui-explorer --list-all`
+To see all directories and files you can use `tui-explorer --list-all` or set the envirnment variable `LIST_ALL` to `1`
 
-The programm automatically detects the system language via the `LANG` environment variable which is the standard in UNIX.
+The programm automatically detects the system language via the `LANG` environment variable which is the standard on UNIX.
 The project supports following languages:
 * English
 * German
