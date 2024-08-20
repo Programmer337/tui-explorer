@@ -1,5 +1,6 @@
 use fluent_templates::{static_loader, Loader};
 use std::env;
+use std::ffi::OsString;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
@@ -28,21 +29,19 @@ pub struct Config {
 }
 impl Config {
     /// reads the config and returns an instance of Config
-    /// # Panics
-    /// args are not valid unicode
     pub fn read_conf() -> Self {
         // Reading list_all
-        let as_string: u8 = env::var("LIST_ALL")
+        let as_u8: u8 = env::var("LIST_ALL")
             .unwrap_or_else(|_err| "0".to_string())
             .trim()
             .parse()
             .unwrap_or(0);
-        let mut list_all: bool = match as_string {
+        let mut list_all: bool = match as_u8 {
             0 => false,
             _ => true,
         };
 
-        if env::args().nth(1).unwrap_or("0".to_string()) == *"--list-all" {
+        if env::args_os().nth(1).unwrap_or(OsString::from("0")) == *"--list-all" {
             list_all = true;
         };
 
@@ -148,8 +147,6 @@ fn handle_err(err: io::Error, lang: &LanguageIdentifier) {
 }
 
 /// runs the programm
-/// # Panics
-/// current_dir is unvalid or the user lacks permission
 pub fn run(config: Config) -> Result<(), String> {
     let mut list_all_once = false;
     loop {
